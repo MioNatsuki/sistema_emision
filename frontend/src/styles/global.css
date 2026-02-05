@@ -1,0 +1,22 @@
+:root {
+  --color1: #ffabab;
+  --color2: #ffdaab;
+  --color3: #ddffab;
+  --color4: #abe4ff;
+  --color5: #d9abff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Calibri', 'Roboto', 'Arial', sans-serif;
+  background-color: #f5f5f5;
+}
+
+#root {
+  min-height: 100vh;
+}
