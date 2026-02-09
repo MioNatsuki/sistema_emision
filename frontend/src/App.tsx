@@ -8,6 +8,7 @@ import './styles/global.css';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import ProyectoMenu from './pages/ProyectoMenu';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proyecto/:proyectoId/menu"
+              element={
+                <ProtectedRoute>
+                  <ProyectoMenu />
                 </ProtectedRoute>
               }
             />

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -30,6 +32,14 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+# Crear directorios si no existen
+os.makedirs("./uploads/proyectos", exist_ok=True)
+os.makedirs("./uploads/plantillas", exist_ok=True)
+
+# Servir archivos estáticos
+app.mount("/uploads", StaticFiles(directory="./uploads"), name="uploads")
+
 # Importar routers
-from app.api.v1 import auth
+from app.api.v1 import auth, proyectos
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
+app.include_router(proyectos.router, prefix="/api/v1/proyectos", tags=["Proyectos"])
