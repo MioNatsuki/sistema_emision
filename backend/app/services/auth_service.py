@@ -14,8 +14,11 @@ class AuthService:
     def authenticate_user(db: Session, login_data: LoginRequest, ip_address: str = None) -> TokenResponse:
         """Autenticar usuario y generar token"""
         
-        # Buscar usuario
-        user = db.query(Usuario).filter(Usuario.username == login_data.username).first()
+        # Buscar usuario por username O email (CORREGIDO)
+        user = db.query(Usuario).filter(
+            (Usuario.username == login_data.username) | 
+            (Usuario.email == login_data.username)
+        ).first()
         
         if not user:
             # Registrar intento fallido en bitácora (lo haremos después)
