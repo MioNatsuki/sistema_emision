@@ -7,6 +7,7 @@ from app.models.usuario import Usuario
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.schemas.auth import LoginRequest, TokenResponse, UserCreate, UserResponse
 from app.core.config import settings
+from app.services.bitacora_service import BitacoraService
 
 class AuthService:
     
@@ -14,14 +15,24 @@ class AuthService:
     def authenticate_user(db: Session, login_data: LoginRequest, ip_address: str = None) -> TokenResponse:
         """Autenticar usuario y generar token"""
         
-        # Buscar usuario por username O email (CORREGIDO)
+
         user = db.query(Usuario).filter(
             (Usuario.username == login_data.username) | 
             (Usuario.email == login_data.username)
         ).first()
         
         if not user:
-            # Registrar intento fallido en bitácora (lo haremos después)
+            # Registrar intento fallido
+            BitacoraService.registrar(
+                db=db,
+                uuid_usuario=None,
+                accion="LOGIN_FALLIDO",
+                entidad="USUARIO",
+                entidad_id=login_data.username,
+                detalles={"motivo": "Usuario no encontrado"},
+                ip_address=ip_address,
+                fue_exitoso=False
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Credenciales incorrectas"
@@ -37,8 +48,20 @@ class AuthService:
         
         # Verificar contraseña
         if not verify_password(login_data.password, user.contrasena):
-            # Incrementar intentos fallidos
             AuthService._manejar_intento_fallido(db, user)
+            
+            # Registrar en bitácora
+            BitacoraService.registrar(
+                db=db,
+                uuid_usuario=user.uuid_usuario,
+                accion="LOGIN_FALLIDO",
+                entidad="USUARIO",
+                entidad_id=str(user.uuid_usuario),
+                detalles={"motivo": "Contraseña incorrecta"},
+                ip_address=ip_address,
+                fue_exitoso=False
+            )
+            
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Credenciales incorrectas"
@@ -64,7 +87,16 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
-        # Registrar en bitácora (lo haremos después)
+        BitacoraService.registrar(
+            db=db,
+            uuid_usuario=user.uuid_usuario,
+            accion="LOGIN_EXITOSO",
+            entidad="USUARIO",
+            entidad_id=str(user.uuid_usuario),
+            detalles={"username": user.username},
+            ip_address=ip_address,
+            fue_exitoso=True
+        )
         
         return TokenResponse(
             access_token=access_token,

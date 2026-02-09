@@ -5,6 +5,7 @@ from app.api.deps import get_db, get_current_active_user
 from app.schemas.auth import LoginRequest, TokenResponse, UserResponse, UserCreate
 from app.services.auth_service import AuthService
 from app.models.usuario import Usuario
+from app.services.bitacora_service import BitacoraService
 
 router = APIRouter()
 
@@ -50,10 +51,20 @@ async def register(
 
 @router.post("/logout")
 async def logout(
-    current_user: Usuario = Depends(get_current_active_user)
+    request: Request,
+    current_user: Usuario = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    """
-    Logout (el token simplemente expira del lado del cliente)
-    """
-    # Registrar en bitácora (lo haremos después)
+    """Logout"""
+    
+    # Registrar en bitácora
+    BitacoraService.registrar(
+        db=db,
+        uuid_usuario=current_user.uuid_usuario,
+        accion="LOGOUT",
+        entidad="USUARIO",
+        entidad_id=str(current_user.uuid_usuario),
+        ip_address=request.client.host
+    )
+    
     return {"message": "Logout exitoso"}
