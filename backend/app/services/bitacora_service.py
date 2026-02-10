@@ -6,6 +6,21 @@ from datetime import datetime
 from app.models.bitacora import Bitacora
 
 class BitacoraService:
+
+    @staticmethod
+    def _convert_uuids_to_strings(data: dict) -> dict:
+        if not data:
+            return data
+            
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                result[key] = BitacoraService._convert_uuids_to_strings(value)
+            elif isinstance(value, uuid.UUID):
+                result[key] = str(value)
+            else:
+                result[key] = value
+        return result
     
     @staticmethod
     def registrar(
@@ -20,7 +35,10 @@ class BitacoraService:
         fue_exitoso: bool = True,
         mensaje_error: Optional[str] = None
     ) -> Bitacora:
-        """Registrar entrada en bitácora"""
+        
+        # Convertir UUIDs a strings en los detalles
+        if detalles:
+            detalles = BitacoraService._convert_uuids_to_strings(detalles)
         
         registro = Bitacora(
             uuid_usuario=uuid_usuario,
