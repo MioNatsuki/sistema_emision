@@ -30,6 +30,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { plantillasService } from '@/services/plantillas.service';
 import { useAuthStore } from '@/store/authStore';
 import PropertiesPanel from '@/components/plantillas/PropertiesPanel';
+import CampoSelector from '@/components/plantillas/CampoSelector';
 
 const DRAWER_WIDTH = 240;
 const CANVAS_WIDTH = 816; // 21.59cm a 96 DPI
@@ -44,6 +45,7 @@ export default function PlantillaEditor() {
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [campoSelectorOpen, setCampoSelectorOpen] = useState(false);
 
   // Obtener plantilla
   const { data: plantilla, isLoading } = useQuery({
@@ -242,6 +244,42 @@ export default function PlantillaEditor() {
     fabricCanvas.renderAll();
   };
 
+  const handleCampoSelected = (campo: string, etiqueta?: string) => {
+    if (!fabricCanvas) return;
+
+    // Si tiene etiqueta, crear dos elementos: etiqueta + campo
+    if (etiqueta) {
+      // Crear etiqueta (texto plano)
+      const labelText = new fabric.Text(etiqueta, {
+        left: 100,
+        top: 100,
+        fontFamily: 'Calibri',
+        fontSize: 11,
+        fill: '#000000',
+      });
+
+      (labelText as any).customId = `elem_${Date.now()}_label`;
+      (labelText as any).customType = 'texto_plano';
+
+      fabricCanvas.add(labelText);
+
+      // Calcular posición del campo (justo después de la etiqueta)
+      const labelWidth = labelText.width || 0;
+      
+      addCampoBD(
+        campo, 
+        (100 + labelWidth + 5) / CANVAS_WIDTH * 21.59, 
+        100 / CANVAS_HEIGHT * 34.01
+      );
+    } else {
+      // Solo agregar el campo
+      addCampoBD(campo);
+    }
+    
+    // Cerrar selector
+    setCampoSelectorOpen(false);
+  };
+
   const deleteSelected = () => {
     if (!fabricCanvas || !selectedObject) return;
 
@@ -309,7 +347,7 @@ export default function PlantillaEditor() {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {renderListItem(() => addTextoPlano(), <TextFieldsIcon />, "Texto")}
-            {renderListItem(() => {}, <DataObjectIcon />, "Campo BD")}
+            {renderListItem(() => setCampoSelectorOpen(true), <DataObjectIcon />, "Campo BD")}
             {renderListItem(() => {}, <ImageIcon />, "Imagen")}
             {renderListItem(() => {}, <QrCodeIcon />, "Código Barras")}
             <Divider />
@@ -383,6 +421,16 @@ export default function PlantillaEditor() {
           selectedObject={selectedObject}
           canvas={fabricCanvas}
           onUpdate={() => fabricCanvas?.renderAll()}
+        />
+      )}
+
+      {/* Selector de campos */}
+      {plantilla && (
+        <CampoSelector
+          open={campoSelectorOpen}
+          nombrePadron={plantilla.nombre_padron || ''}
+          onClose={() => setCampoSelectorOpen(false)}
+          onSelect={handleCampoSelected}
         />
       )}
     </Box>

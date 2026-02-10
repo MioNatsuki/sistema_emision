@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ProyectoMenu from './pages/ProyectoMenu';
+import PlantillaEditor from './pages/PlantillaEditor';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/plantilla/:plantillaId/editor"
+              element={
+                <ProtectedRoute>
+                  <PlantillaEditor />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </BrowserRouter>
@@ -50,5 +59,4 @@ function App() {
     </QueryClientProvider>
   );
 }
-
 export default App;
