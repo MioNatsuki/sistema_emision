@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from typing import Generator, Optional
+from typing import Generator
 from datetime import datetime
 
 from app.core.database import SessionLocal
@@ -25,9 +25,14 @@ async def get_current_user(
 ) -> Usuario:
     """Obtener usuario actual desde token JWT"""
     
+    # Debug: ver qué llega
+    print(f"🔍 [AUTH] Credentials recibidas: {credentials}")
+    print(f"🔍 [AUTH] Scheme: {credentials.scheme}")
+    print(f"🔍 [AUTH] Token: {credentials.credentials[:30]}..." if credentials.credentials else "❌ NO HAY TOKEN")
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="No se pudo validar las credenciales",
+        detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
@@ -35,16 +40,21 @@ async def get_current_user(
     payload = decode_access_token(token)
     
     if payload is None:
+        print("❌ [AUTH] Token inválido o expirado")
         raise credentials_exception
     
     username: str = payload.get("sub")
     if username is None:
+        print("❌ [AUTH] No 'sub' en payload")
         raise credentials_exception
+    
+    print(f"✅ [AUTH] Username extraído: {username}")
     
     # Buscar usuario en BD
     user = db.query(Usuario).filter(Usuario.username == username).first()
     
     if user is None:
+        print(f"❌ [AUTH] Usuario '{username}' no encontrado")
         raise credentials_exception
     
     if not user.is_active:
@@ -66,6 +76,7 @@ async def get_current_user(
             detail=f"Usuario bloqueado hasta {user.bloqueado_hasta}"
         )
     
+    print(f"✅ [AUTH] Usuario autenticado: {username}")
     return user
 
 async def get_current_active_user(

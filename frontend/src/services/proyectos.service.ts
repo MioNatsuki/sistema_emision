@@ -3,7 +3,7 @@ import { Proyecto, ProyectoCreate, ProyectoUpdate, Padron } from '@/types/proyec
 
 export const proyectosService = {
   getAll: async (): Promise<Proyecto[]> => {
-    const response = await api.get<Proyecto[]>('/proyectos');
+    const response = await api.get<Proyecto[]>('/proyectos/');
     return response.data;
   },
 
@@ -13,7 +13,7 @@ export const proyectosService = {
   },
 
   create: async (data: ProyectoCreate): Promise<Proyecto> => {
-    const response = await api.post<Proyecto>('/proyectos', data);
+    const response = await api.post<Proyecto>('/proyectos/', data);
     return response.data;
   },
 
