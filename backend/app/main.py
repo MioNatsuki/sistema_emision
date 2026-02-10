@@ -40,6 +40,8 @@ os.makedirs("./uploads/plantillas", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="./uploads"), name="uploads")
 
 # Importar routers
-from app.api.v1 import auth, proyectos
+from app.api.v1 import auth, proyectos, plantillas
+
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
 app.include_router(proyectos.router, prefix="/api/v1/proyectos", tags=["Proyectos"])
+app.include_router(plantillas.router, prefix="/api/v1/plantillas", tags=["Plantillas"])
