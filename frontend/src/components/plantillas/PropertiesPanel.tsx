@@ -15,7 +15,6 @@ import {
 import * as fabric from 'fabric';
 
 const DRAWER_WIDTH = 280;
-const SCALE_FACTOR = 2.5; // Debe coincidir con PlantillaEditor
 
 interface PropertiesPanelProps {
   selectedObject: fabric.Object | null;
@@ -30,7 +29,7 @@ export default function PropertiesPanel({
 }: PropertiesPanelProps) {
   const [contenido, setContenido] = useState('');
   const [fuente, setFuente] = useState('Calibri');
-  const [tamano, setTamano] = useState(11);
+  const [tamano, setTamano] = useState(24);
   const [negrita, setNegrita] = useState(false);
   const [italica, setItalica] = useState(false);
   const [color, setColor] = useState('#000000');
@@ -44,8 +43,7 @@ export default function PropertiesPanel({
       const textObj = selectedObject as fabric.Text;
       setContenido(textObj.text || '');
       setFuente(textObj.fontFamily || 'Calibri');
-      // Convertir el tamaño escalado de vuelta al tamaño real
-      setTamano(Math.round((textObj.fontSize || 11) / SCALE_FACTOR));
+      setTamano(textObj.fontSize || 24);
       setNegrita(textObj.fontWeight === 'bold');
       setItalica(textObj.fontStyle === 'italic');
       setColor(textObj.fill?.toString() || '#000000');
@@ -56,7 +54,7 @@ export default function PropertiesPanel({
   const updateObject = (updates: Partial<fabric.Text>) => {
     if (!selectedObject || !canvas) return;
 
-    Object.assign(selectedObject, updates);
+    selectedObject.set(updates);
     canvas.renderAll();
     onUpdate();
   };
@@ -77,8 +75,7 @@ export default function PropertiesPanel({
 
   const handleTamanoChange = (value: number) => {
     setTamano(value);
-    // Escalar el tamaño de fuente para el canvas
-    updateObject({ fontSize: value * SCALE_FACTOR });
+    updateObject({ fontSize: value});
   };
 
   const handleNegritaChange = (checked: boolean) => {
@@ -113,6 +110,8 @@ export default function PropertiesPanel({
         '& .MuiDrawer-paper': {
           width: DRAWER_WIDTH,
           boxSizing: 'border-box',
+          position: 'relative',
+          height: '100vh',
         },
       }}
     >
