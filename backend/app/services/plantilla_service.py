@@ -194,7 +194,7 @@ class PlantillaService:
         # Si se actualiza canvas_config, incrementar versión
         if 'canvas_config' in update_data:
             plantilla.version += 1
-            update_data['canvas_config'] = update_data['canvas_config'].model_dump()
+            #update_data['canvas_config'] = update_data['canvas_config'].model_dump()
         
         for field, value in update_data.items():
             setattr(plantilla, field, value)

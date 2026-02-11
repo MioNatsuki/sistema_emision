@@ -13,7 +13,7 @@ export const plantillasService = {
   },
 
   create: async (data: PlantillaCreate): Promise<Plantilla> => {
-    const response = await api.post<Plantilla>('/plantillas', data);
+    const response = await api.post<Plantilla>('/plantillas/', data);
     return response.data;
   },
 

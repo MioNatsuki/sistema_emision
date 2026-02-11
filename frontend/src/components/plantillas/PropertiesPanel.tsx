@@ -15,6 +15,7 @@ import {
 import * as fabric from 'fabric';
 
 const DRAWER_WIDTH = 280;
+const SCALE_FACTOR = 2.5; // Debe coincidir con PlantillaEditor
 
 interface PropertiesPanelProps {
   selectedObject: fabric.Object | null;
@@ -43,7 +44,8 @@ export default function PropertiesPanel({
       const textObj = selectedObject as fabric.Text;
       setContenido(textObj.text || '');
       setFuente(textObj.fontFamily || 'Calibri');
-      setTamano(textObj.fontSize || 11);
+      // Convertir el tamaño escalado de vuelta al tamaño real
+      setTamano(Math.round((textObj.fontSize || 11) / SCALE_FACTOR));
       setNegrita(textObj.fontWeight === 'bold');
       setItalica(textObj.fontStyle === 'italic');
       setColor(textObj.fill?.toString() || '#000000');
@@ -75,7 +77,8 @@ export default function PropertiesPanel({
 
   const handleTamanoChange = (value: number) => {
     setTamano(value);
-    updateObject({ fontSize: value });
+    // Escalar el tamaño de fuente para el canvas
+    updateObject({ fontSize: value * SCALE_FACTOR });
   };
 
   const handleNegritaChange = (checked: boolean) => {
@@ -146,6 +149,8 @@ export default function PropertiesPanel({
                 <MenuItem value="Calibri">Calibri</MenuItem>
                 <MenuItem value="Arial">Arial</MenuItem>
                 <MenuItem value="Times New Roman">Times New Roman</MenuItem>
+                <MenuItem value="Courier New">Courier New</MenuItem>
+                <MenuItem value="Verdana">Verdana</MenuItem>
               </Select>
             </FormControl>
 
@@ -157,7 +162,7 @@ export default function PropertiesPanel({
                 label="Tamaño"
                 onChange={(e) => handleTamanoChange(Number(e.target.value))}
               >
-                {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32].map((size) => (
+                {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72].map((size) => (
                   <MenuItem key={size} value={size}>
                     {size}
                   </MenuItem>
@@ -226,17 +231,20 @@ export default function PropertiesPanel({
 
             {/* Info de posición y tamaño */}
             <Divider sx={{ my: 2 }} />
-            <Typography variant="body2" color="text.secondary">
-              X: {selectedObject.left?.toFixed(2)}px
+            <Typography variant="caption" display="block" color="text.secondary">
+              <strong>Posición en canvas:</strong>
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Y: {selectedObject.top?.toFixed(2)}px
+              X: {selectedObject.left?.toFixed(0)}px
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Ancho: {((selectedObject.width || 0) * (selectedObject.scaleX || 1)).toFixed(2)}px
+              Y: {selectedObject.top?.toFixed(0)}px
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Alto: {((selectedObject.height || 0) * (selectedObject.scaleY || 1)).toFixed(2)}px
+              Ancho: {((selectedObject.width || 0) * (selectedObject.scaleX || 1)).toFixed(0)}px
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Alto: {((selectedObject.height || 0) * (selectedObject.scaleY || 1)).toFixed(0)}px
             </Typography>
           </>
         )}

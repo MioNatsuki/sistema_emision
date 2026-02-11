@@ -33,8 +33,11 @@ import PropertiesPanel from '@/components/plantillas/PropertiesPanel';
 import CampoSelector from '@/components/plantillas/CampoSelector';
 
 const DRAWER_WIDTH = 240;
-const CANVAS_WIDTH = 816; // 21.59cm a 96 DPI
-const CANVAS_HEIGHT = 1286; // 34.01cm a 96 DPI
+
+// Canvas más grande para mejor edición (escala 2x del tamaño real)
+const SCALE_FACTOR = 2.5; // Multiplicador para hacer el canvas más grande y cómodo
+const CANVAS_WIDTH = 816 * SCALE_FACTOR; // 21.59cm escalado
+const CANVAS_HEIGHT = 1286 * SCALE_FACTOR; // 34.01cm escalado
 
 export default function PlantillaEditor() {
   const { plantillaId } = useParams<{ plantillaId: string }>();
@@ -81,8 +84,8 @@ export default function PlantillaEditor() {
       backgroundColor: '#FFFFFF',
     });
 
-    // Grid de fondo
-    const gridSize = 50;
+    // Grid de fondo más fino
+    const gridSize = 25 * SCALE_FACTOR;
     for (let i = 0; i < CANVAS_WIDTH / gridSize; i++) {
       canvas.add(new fabric.Line([i * gridSize, 0, i * gridSize, CANVAS_HEIGHT], {
         stroke: '#e0e0e0',
@@ -140,10 +143,10 @@ export default function PlantillaEditor() {
     config.elementos?.forEach((elemento: any) => {
       switch (elemento.tipo) {
         case 'texto_plano':
-          addTextoPlano(elemento.contenido, elemento.x, elemento.y, elemento.estilo);
+          addTextoPlano(elemento.contenido, elemento.x, elemento.y, elemento.estilo, false);
           break;
         case 'campo_bd':
-          addCampoBD(elemento.campo_nombre, elemento.x, elemento.y, elemento.estilo);
+          addCampoBD(elemento.campo_nombre, elemento.x, elemento.y, elemento.estilo, false);
           break;
         // Agregar más tipos después
       }
@@ -160,10 +163,11 @@ export default function PlantillaEditor() {
       .map((obj: fabric.Object) => {
         const commonProps = {
           id: (obj as any).customId || `elem_${Date.now()}`,
-          x: obj.left! / CANVAS_WIDTH * 21.59,
-          y: obj.top! / CANVAS_HEIGHT * 34.01,
-          ancho: obj.width! * (obj.scaleX || 1) / CANVAS_WIDTH * 21.59,
-          alto: obj.height! * (obj.scaleY || 1) / CANVAS_HEIGHT * 34.01,
+          // Convertir de coordenadas del canvas escalado a cm del documento real
+          x: (obj.left! / CANVAS_WIDTH) * 21.59,
+          y: (obj.top! / CANVAS_HEIGHT) * 34.01,
+          ancho: (obj.width! * (obj.scaleX || 1) / CANVAS_WIDTH) * 21.59,
+          alto: (obj.height! * (obj.scaleY || 1) / CANVAS_HEIGHT) * 34.01,
         };
 
         if (obj.type === 'text' || obj.type === 'i-text') {
@@ -199,14 +203,18 @@ export default function PlantillaEditor() {
     };
   };
 
-  const addTextoPlano = (texto: string = 'Texto', x?: number, y?: number, estilo?: any) => {
+  const addTextoPlano = (texto: string = 'Texto', x?: number, y?: number, estilo?: any, setActive: boolean = true) => {
     if (!fabricCanvas) return;
 
+    // Convertir coordenadas de cm a píxeles del canvas escalado (si se proporcionan)
+    const left = x ? (x / 21.59) * CANVAS_WIDTH : 100;
+    const top = y ? (y / 34.01) * CANVAS_HEIGHT : 100;
+
     const text = new fabric.IText(texto, {
-      left: x ? x / 21.59 * CANVAS_WIDTH : 100,
-      top: y ? y / 34.01 * CANVAS_HEIGHT : 100,
+      left,
+      top,
       fontFamily: estilo?.fuente || 'Calibri',
-      fontSize: estilo?.tamano || 11,
+      fontSize: (estilo?.tamano || 11) * SCALE_FACTOR, // Escalar el tamaño de fuente
       fontWeight: estilo?.negrita ? 'bold' : 'normal',
       fontStyle: estilo?.italica ? 'italic' : 'normal',
       fill: estilo?.color || '#000000',
@@ -217,18 +225,24 @@ export default function PlantillaEditor() {
     (text as any).customType = 'texto_plano';
 
     fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
+    if (setActive) {
+      fabricCanvas.setActiveObject(text);
+    }
     fabricCanvas.renderAll();
   };
 
-  const addCampoBD = (campo: string, x?: number, y?: number, estilo?: any) => {
+  const addCampoBD = (campo: string, x?: number, y?: number, estilo?: any, setActive: boolean = true) => {
     if (!fabricCanvas) return;
 
+    // Convertir coordenadas de cm a píxeles del canvas escalado (si se proporcionan)
+    const left = x ? (x / 21.59) * CANVAS_WIDTH : 100;
+    const top = y ? (y / 34.01) * CANVAS_HEIGHT : 100;
+
     const text = new fabric.IText(`{${campo}}`, {
-      left: x ? x / 21.59 * CANVAS_WIDTH : 100,
-      top: y ? y / 34.01 * CANVAS_HEIGHT : 100,
+      left,
+      top,
       fontFamily: estilo?.fuente || 'Calibri',
-      fontSize: estilo?.tamano || 11,
+      fontSize: (estilo?.tamano || 11) * SCALE_FACTOR, // Escalar el tamaño de fuente
       fontWeight: estilo?.negrita ? 'bold' : 'normal',
       fontStyle: estilo?.italica ? 'italic' : 'normal',
       fill: '#0066cc',
@@ -240,7 +254,9 @@ export default function PlantillaEditor() {
     (text as any).customData = { campo_nombre: campo };
 
     fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
+    if (setActive) {
+      fabricCanvas.setActiveObject(text);
+    }
     fabricCanvas.renderAll();
   };
 
@@ -254,7 +270,7 @@ export default function PlantillaEditor() {
         left: 100,
         top: 100,
         fontFamily: 'Calibri',
-        fontSize: 11,
+        fontSize: 11 * SCALE_FACTOR,
         fill: '#000000',
       });
 
@@ -268,8 +284,8 @@ export default function PlantillaEditor() {
       
       addCampoBD(
         campo, 
-        (100 + labelWidth + 5) / CANVAS_WIDTH * 21.59, 
-        100 / CANVAS_HEIGHT * 34.01
+        ((100 + labelWidth + 5) / CANVAS_WIDTH) * 21.59, 
+        (100 / CANVAS_HEIGHT) * 34.01
       );
     } else {
       // Solo agregar el campo
@@ -311,7 +327,10 @@ export default function PlantillaEditor() {
         textAlign: 'left',
         textTransform: 'none',
         width: '100%',
-        '&:hover': { bgcolor: 'action.hover' },
+        border: 'none',
+        background: 'none',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        '&:hover': disabled ? {} : { bgcolor: 'action.hover' },
       }}
     >
       <ListItemIcon sx={{ minWidth: 40 }}>
@@ -348,8 +367,8 @@ export default function PlantillaEditor() {
           <List>
             {renderListItem(() => addTextoPlano(), <TextFieldsIcon />, "Texto")}
             {renderListItem(() => setCampoSelectorOpen(true), <DataObjectIcon />, "Campo BD")}
-            {renderListItem(() => {}, <ImageIcon />, "Imagen")}
-            {renderListItem(() => {}, <QrCodeIcon />, "Código Barras")}
+            {renderListItem(() => {}, <ImageIcon />, "Imagen", true)}
+            {renderListItem(() => {}, <QrCodeIcon />, "Código Barras", true)}
             <Divider />
             {renderListItem(deleteSelected, <DeleteIcon />, "Eliminar", !selectedObject)}
           </List>
@@ -409,7 +428,7 @@ export default function PlantillaEditor() {
             backgroundColor: '#f5f5f5',
           }}
         >
-          <Paper elevation={3}>
+          <Paper elevation={3} sx={{ display: 'inline-block' }}>
             <canvas ref={canvasRef} />
           </Paper>
         </Box>
